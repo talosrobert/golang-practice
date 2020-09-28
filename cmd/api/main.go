@@ -9,17 +9,25 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/gorilla/mux"
 	"github.com/talosrobert/golang-practice/cmd/api/handlers"
 )
 
 func main() {
 	l := log.New(os.Stdout, "hello-api", log.LstdFlags)
-	hh := handlers.NewHello(l)
-	bh := handlers.NewBye(l)
+	ph := handlers.NewProduct(l)
 
-	sm := http.NewServeMux()
-	sm.Handle("/", hh)
-	sm.Handle("/bye", bh)
+	sm := mux.NewRouter()
+	getSubrouter := sm.Methods("GET").Subrouter()
+	getSubrouter.HandleFunc("/", ph.Get)
+
+	putSubrouter := sm.Methods("PUT").Subrouter()
+	putSubrouter.HandleFunc("/{id:[0-9]+}", ph.Update)
+	putSubrouter.Use(ph.MiddlewareProductValidation)
+
+	postSubrouter := sm.Methods("POST").Subrouter()
+	postSubrouter.HandleFunc("/", ph.Add)
+	postSubrouter.Use(ph.MiddlewareProductValidation)
 
 	s := &http.Server{
 		Addr:         ":8083",
@@ -33,6 +41,7 @@ func main() {
 		err := s.ListenAndServe()
 		if err != nil {
 			log.Fatal(err)
+			os.Exit(1)
 		}
 	}()
 

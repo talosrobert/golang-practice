@@ -11,8 +11,8 @@ func main() {
 	router.HandleFunc("/snippet", showSnippet)
 	router.HandleFunc("/snippet/create", createSnippet)
 
-	log.Println("Starting server on port 4000")
-	err := http.ListenAndServe(":4000", router)
+	log.Println("Starting server on port 8080")
+	err := http.ListenAndServe(":8080", router)
 
 	log.Fatal(err)
 }

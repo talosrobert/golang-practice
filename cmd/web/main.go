@@ -1,53 +1,36 @@
 package main
 
 import (
-	"log"
-	"net/http"
 	"flag"
-	"os"
+	"net/http"
 )
 
-type application struct {
-	infoLogger *log.Logger
-	errLogger *log.Logger
-}
-
-type config struct {
-	Addr string
-	StaticDir string
-}
-
-func newConfig() *config {
-	return &config{}
-}
-
 func main() {
-	app := &application{
-		infoLogger: log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime),
-		errLogger: log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile),
-	}
+	app := newDefaultApplication()
 
-	cfg := newConfig()
-	flag.StringVar(&cfg.Addr, "addr", ":8080", "HTTP Network address")
-	flag.StringVar(&cfg.StaticDir, "staticdir", "./ui/static", "Static files directory")
+	var pathToCfg string
+	flag.StringVar(&pathToCfg, "cfg", "./conf.json", "Configuration file path.")
 	flag.Parse()
 
-	router := http.NewServeMux()
-	router.HandleFunc("/", app.home)
-	router.HandleFunc("/snippet", app.showSnippet)
-	router.HandleFunc("/snippet/create", app.createSnippet)
+	cfg := newConfig()
+	cfg.loadConfigFromPath(pathToCfg)
 
-	fsvr := http.FileServer(http.Dir(cfg.StaticDir))
-	router.Handle("/static/", http.StripPrefix("/static", fsvr))
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", home)
+	mux.HandleFunc("/snippet", showSnippet)
+	mux.HandleFunc("/snippet/create", createSnippet)
 
-	app.infoLogger.Printf("Starting server on %s", cfg.Addr)
+	fsrv := http.FileServer(http.Dir(cfg.StaticDir))
+	mux.Handle("/static/", http.StripPrefix("/static", fsrv))
 
-	hsvr := &http.Server{
-		Addr: cfg.Addr,
-		Handler: router,
+	app.infoLogger.Printf("Starting server on %s", cfg.getAddressAndPort())
+
+	hsrv := &http.Server{
+		Addr:     cfg.getAddressAndPort(),
+		Handler:  mux,
 		ErrorLog: app.errLogger,
 	}
 
-	err := hsvr.ListenAndServe()
+	err := hsrv.ListenAndServe()
 	app.errLogger.Fatal(err)
 }

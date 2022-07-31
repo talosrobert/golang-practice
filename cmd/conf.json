@@ -1,5 +1,10 @@
 {
     "address":"",
     "port":"3000",
-    "static_directory":"./ui/static"
+    "static_directory":"./ui/static",
+    "database_type":"mysql",
+    "database_name":"snippetbox",
+	"database_address":"localhost",
+	"database_username":"web",
+	"database_password":"pass"
 }

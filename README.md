@@ -5,5 +5,4 @@ Go Practice Repository
 1. make dev
 2. ./build/main -cfg cmd/conf.json >> build/info.log 2>> build/err.log
 
-
 PAGE 168
